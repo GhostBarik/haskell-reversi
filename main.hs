@@ -1,6 +1,6 @@
 import Data.List
 
--- cell on the board 
+-- Cell on the board 
 data Cell = Blank | FilledCell Color deriving Show
 data Color = Black | White deriving Show
 
@@ -12,7 +12,6 @@ type Position = Int
 type Coordinates = (Position, Position)
 
 -- initial board state for our game
--- TODO: implement factory function for initial state
 intialBoard :: Board
 intialBoard = [
     [Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank],
@@ -24,11 +23,11 @@ intialBoard = [
     [Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank],
     [Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank]]
 
--- convert the board to pretty-printable String
+-- converts the board to pretty-printable String
 boardToString :: Board -> String
-boardToString = concat . map rowToString
-    where rowToString    = (++ "\n") . intersperse ',' . cellsToString
-          cellsToString  = map cellToChar
+boardToString = concat . map rowsToString
+    where rowsToString = (++ "\n") . intersperse ',' . rowToString
+          rowToString  = map cellToChar
 
 -- converts the cell to pretty-printable Character
 cellToChar :: Cell -> Char
@@ -36,22 +35,26 @@ cellToChar Blank = '_'
 cellToChar (FilledCell Black) = 'x'               
 cellToChar (FilledCell White) = 'o'
 
--- put the new cell into board on the specific position
+-- put new cell into board on the specific position
 replaceCellInBoard :: Board -> Coordinates -> Cell -> Board
-replaceCellInBoard board (y,x) cell = undefined -- TODO: implement
+replaceCellInBoard b (y,x) c = undefined -- TODO: implement
 
--- get the specific cell (with specific {X,Y} coordinates) from board 
+-- get cell (with specific {X,Y} coordinates) from board 
 getCellFromBoard :: Board -> Coordinates -> Cell
-getCellFromBoard board (y, x) = board !! y !! x
+getCellFromBoard b (y, x) = b !! y !! x
+
+--      0    1    2
+-- l => A -> B -> C -> []
+-- drop 2 l =>  C -> []
+-- take 2 l =>  A -> B -> []
 
 -- replace element in list by new element (in specific position)
--- TODO: use splitAt function!
 putElementToList :: Position -> a -> [a] -> [a]
 putElementToList position newElement l = leftPartOfTheList ++ [newElement] ++ rightPartOfTheList
     where leftPartOfTheList  = take position l
           rightPartOfTheList = drop (position+1) l
 
--- run application and display initial board
+-- run application and print initial board
 main :: IO ()
 main = putStr $ boardToString intialBoard
 

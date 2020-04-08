@@ -26,9 +26,8 @@ intialBoard = [
 
 -- convert the board to pretty-printable String
 boardToString :: Board -> String
-boardToString = concat . map rowToString
-    where rowToString    = (++ "\n") . intersperse ',' . cellsToString
-          cellsToString  = map cellToChar
+boardToString = concat . (map rowToString)
+    where rowToString = (++ "\n") . (intersperse ',') . (map cellToChar)
 
 -- converts the cell to pretty-printable Character
 cellToChar :: Cell -> Char

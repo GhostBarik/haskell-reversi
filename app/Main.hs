@@ -47,9 +47,9 @@ getCellFromBoard board (y, x) = board !! y !! x
 -- replace element in list by new element (in specific position)
 -- TODO: use splitAt function!
 replaceCellInList :: Position -> Cell -> [Cell] -> [Cell]
-replaceCellInList position newElement l = leftPartOfTheList ++ [newElement] ++ rightPartOfTheList
-    where leftPartOfTheList  = take position l
-          rightPartOfTheList = drop (position+1) l
+replaceCellInList position newElement l = 
+    let (left, (_:right)) = splitAt position l -- split list and remove element on given position
+    in left ++ [newElement] ++ right           -- put new element and merge list back
 
 -- run application and display initial board
 main :: IO ()

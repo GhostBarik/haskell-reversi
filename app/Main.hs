@@ -46,13 +46,14 @@ getCellFromBoard board (y, x) = board !! y !! x
 
 -- replace element in list by new element (in specific position)
 -- TODO: use splitAt function!
-putElementToList :: Position -> a -> [a] -> [a]
-putElementToList position newElement l = leftPartOfTheList ++ [newElement] ++ rightPartOfTheList
+replaceCellInList :: Position -> Cell -> [Cell] -> [Cell]
+replaceCellInList position newElement l = leftPartOfTheList ++ [newElement] ++ rightPartOfTheList
     where leftPartOfTheList  = take position l
           rightPartOfTheList = drop (position+1) l
 
 -- run application and display initial board
 main :: IO ()
-main = putStr $ boardToString intialBoard
+main = do
+    putStr $ boardToString intialBoard
 
 

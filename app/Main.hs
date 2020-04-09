@@ -11,48 +11,51 @@ type Board = [[Cell]]
 type Position = Int
 type Coordinates = (Position, Position)
 
+-- the dimensions of board
+boardWidth  = 8
+boardHeight = 8
+
 -- initial board state for our game
--- TODO: implement factory function for initial state
+-- create initial board with size 8x8
 intialBoard :: Board
-intialBoard = [
-    [Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank],
-    [Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank],
-    [Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank],
-    [Blank, Blank, Blank, FilledCell White, FilledCell Black, Blank, Blank, Blank],
-    [Blank, Blank, Blank, FilledCell Black, FilledCell White, Blank, Blank, Blank],
-    [Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank],
-    [Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank],
-    [Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank]]
+intialBoard = 
+      replaceCellInBoard (3, 3) (FilledCell White) 
+    . replaceCellInBoard (3, 4) (FilledCell Black) 
+    . replaceCellInBoard (4, 3) (FilledCell Black)
+    . replaceCellInBoard (4, 4) (FilledCell White)
+       $ blankBoard 
+    where blankBoard = replicate boardHeight row
+          row        = replicate boardWidth Blank
 
 -- convert the board to pretty-printable String
 boardToString :: Board -> String
-boardToString = concat . (map rowToString)
-    where rowToString = (++ "\n") . (intersperse ',') . (map cellToChar)
+boardToString = concatMap $ (++ "\n") . (intersperse ',') . (map cellToChar)
 
 -- converts the cell to pretty-printable Character
 cellToChar :: Cell -> Char
 cellToChar Blank = '_'
-cellToChar (FilledCell Black) = 'x'               
+cellToChar (FilledCell Black) = 'x'
 cellToChar (FilledCell White) = 'o'
-
--- put the new cell into board on the specific position
-replaceCellInBoard :: Board -> Coordinates -> Cell -> Board
-replaceCellInBoard board (y,x) cell = undefined -- TODO: implement
 
 -- get the specific cell (with specific {X,Y} coordinates) from board 
 getCellFromBoard :: Board -> Coordinates -> Cell
 getCellFromBoard board (y, x) = board !! y !! x
 
 -- replace element in list by new element (in specific position)
--- TODO: use splitAt function!
-replaceCellInList :: Position -> Cell -> [Cell] -> [Cell]
-replaceCellInList position newElement l = 
+replaceItemInList :: Position -> a -> [a] -> [a]
+replaceItemInList position newElement l = 
     let (left, (_:right)) = splitAt position l -- split list and remove element on given position
     in left ++ [newElement] ++ right           -- put new element and merge list back
+
+-- replaces an element with specific coordinates on given board
+replaceCellInBoard :: Coordinates -> Cell -> Board -> Board
+replaceCellInBoard (y,x) c b = replaceItemInList y newRow b
+    where newRow = replaceItemInList x c (b !! y)
 
 -- run application and display initial board
 main :: IO ()
 main = do
     putStr $ boardToString intialBoard
 
--- test push
+
+

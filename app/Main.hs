@@ -55,4 +55,4 @@ main :: IO ()
 main = do
     putStr $ boardToString intialBoard
 
-
+-- test push

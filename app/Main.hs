@@ -75,13 +75,13 @@ isLegalPath _ _ = False
 data Direction = DLeft | DRight | DTop | DBottom | DTopLeft | DTopRight | DBottomLeft | DBottomRight
 
 moveInDirection :: Direction -> Coordinates -> Coordinates
-moveInDirection DLeft (y, x) = (y, x - 1)
-moveInDirection DRight (y, x) = (y, x + 1)
-moveInDirection DTop (y, x) = (y - 1, x)
-moveInDirection DBottom (y, x) = (y + 1, x)
-moveInDirection DTopLeft (y, x) = (y - 1, x - 1)
-moveInDirection DTopRight (y, x) = (y - 1, x + 1)
-moveInDirection DBottomLeft (y, x) = (y + 1, x - 1)
+moveInDirection DLeft        (y, x) = (y, x - 1)
+moveInDirection DRight       (y, x) = (y, x + 1)
+moveInDirection DTop         (y, x) = (y - 1, x)
+moveInDirection DBottom      (y, x) = (y + 1, x)
+moveInDirection DTopLeft     (y, x) = (y - 1, x - 1)
+moveInDirection DTopRight    (y, x) = (y - 1, x + 1)
+moveInDirection DBottomLeft  (y, x) = (y + 1, x - 1)
 moveInDirection DBottomRight (y, x) = (y + 1, x + 1)
 
 generatePath :: Coordinates -> Direction -> [Coordinates]

@@ -18,8 +18,7 @@ boardHeight = 8
 -- initial board state for our game
 -- create initial board with size 8x8
 intialBoard :: Board
-intialBoard = foldl (.) id fillFunctions
-       $ blankBoard 
+intialBoard = foldl (.) id fillFunctions blankBoard 
     where fillFunctions = [replaceCellInBoard (y, x) color | 
                           y <- [3,4], x <- [3,4], color <- if x == y then [FilledCell White] else [FilledCell Black]]
           blankBoard    = replicate boardHeight row

@@ -1,4 +1,5 @@
 import Data.List
+import Text.Read
 
 -- the dimensions of board
 boardWidth  = 8
@@ -33,8 +34,8 @@ invertColor Black = White
 
 -- initial board state for our game
 -- create initial board with size 8x8
-intialBoard :: Board
-intialBoard = foldl (.) id fillFunctions blankBoard 
+initialBoard :: Board
+initialBoard = foldl (.) id fillFunctions blankBoard 
     where fillFunctions = [replaceCellInBoard (y, x) color | 
                           y <- [3,4], x <- [3,4], 
                           color <- if x == y then [FilledCell White] else [FilledCell Black]]
@@ -139,11 +140,10 @@ generatePath coordinates direction = takeWhile isInBoard path
 
 -- run application and display initial board
 main :: IO ()
-main = do
-    putStr $ boardToString intialBoard
-    print $ getLegalMoves intialBoard Black
+main = gameLoop initialGameState
+    
 
--- 0) GAME STATE = BOARD, COLOR (print GAME STATE)
+-- 0) GAME STATE = BOARD, COLOR (print GAME STATE) - OK
 -- 1) getLegalMoves and display to the user
 -- 2) user selects one of the suggested moves, prints error message if move is invalid
 -- 3) if move is valid, then call getCellsToUpdate using the selected coordinates
@@ -151,10 +151,52 @@ main = do
 
 data GameState = GameState Board Color
 
-gameLoop :: IO ()
-gameLoop = undefined
+initialGameState = GameState initialBoard Black
 
-gameStateToString :: GameState -> IO ()
-gameStateToString = undefined
+gameStateToString :: GameState -> String
+gameStateToString (GameState board color) = concat $ intersperse "\n" ["Current player: " ++ (show color), boardToString board]
+
+
+legalMovesToString :: [Coordinates] -> String
+legalMovesToString coordinates = concatMap (\(i, coords) -> show i ++ ". " ++ show coords ++ "\n") 
+                                 $ zip [1..] coordinates
+
+
+gameLoop :: GameState -> IO ()
+gameLoop gameState @ (GameState board color) = do
+    putStr $ gameStateToString gameState
+    let legalMoves = getLegalMoves board color
+    let oppositePlayerlegalMoves = getLegalMoves board (invertColor color)
+    if null legalMoves && null oppositePlayerlegalMoves then do
+        putStrLn $ "TODO: calculate points and print score!"
+        putStrLn $ "The end!"
+    else if null legalMoves then
+        -- if the current player doesn't have any legal moves, switch to the other player
+        gameLoop (GameState board (invertColor color))
+    else
+        chooseValidMove gameState legalMoves
+        
+invalidIndexMessage = "Invalid index! Please choose another index."
+
+chooseValidMove :: GameState -> [Coordinates] -> IO ()
+chooseValidMove gameState @ (GameState board color) legalMoves = do
+    putStrLn "Choose your move: "
+    putStr $ legalMovesToString legalMoves
+    let maxIndex = length legalMoves
+    line <- getLine
+    case (readMaybe line :: Maybe Int) of 
+        Just index | index > maxIndex || index < 1 -> do
+            putStrLn $ invalidIndexMessage
+            chooseValidMove gameState legalMoves
+        Just index -> do
+            let chosenCoordinates = legalMoves !! (index-1)
+            putStrLn $ "You picked the following coordinate: " ++ show chosenCoordinates
+            let cellsToUpdate = getCellsToUpdate board color chosenCoordinates
+            let newBoard = makeTurn color cellsToUpdate board
+            gameLoop (GameState newBoard (invertColor color))
+        Nothing -> do
+            putStrLn $ invalidIndexMessage
+            chooseValidMove gameState legalMoves
+
 
 

@@ -107,7 +107,7 @@ initialBoard = boardWithPieces
 boardToString :: Board -> String
 boardToString board = formatLines boardList
   where formatLines = concatMap $ (++ "\n") . (intersperse ',') . (map cellToChar)
-        boardList = S.chunksOf boardWidth (V.toList board)
+        boardList   = S.chunksOf boardWidth (V.toList board)
 
 -- test if given coordinates are located outside the bounds of board (1..8, 1..8)
 isOutOfBoard :: Coordinates -> Bool

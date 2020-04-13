@@ -1,6 +1,10 @@
 import Data.List
 import Text.Read
 
+-- ********************************************************
+-- **********    BASIC DATATYPES + UTILITIES   ************
+-- ********************************************************
+
 -- the dimensions of board
 boardWidth  = 8
 boardHeight = 8
@@ -74,6 +78,23 @@ boardToString = concatMap $ (++ "\n") . (intersperse ',') . (map cellToChar)
 isOutOfBoard :: Coordinates -> Bool
 isOutOfBoard (y, x) = y < 0 || y >= boardHeight || x < 0 || x >= boardWidth
 
+-- Convert GameState to string to the string in the following format:
+-- CurrentPlayer: <Color>
+-- <BOARD>
+gameStateToString :: GameState -> String
+gameStateToString (GameState board color) = concat $ 
+  intersperse "\n" ["Current player: " ++ (show color), boardToString board]
+
+-- Convert the list of coordinates to string in the following format:
+-- 1. (a,b)
+-- 2. (c,d)
+-- 3. etc..
+legalMovesToString :: [Coordinates] -> String
+legalMovesToString coordinates = concatMap tupleToString $ labeledCoordinates
+  where
+    labeledCoordinates = zip [1..] coordinates
+    tupleToString (index, coords) = show index ++ ". " ++ show coords ++ "\n"
+
 -- test if given coordinates are located within the bounds of board (1..8, 1..8)
 isInBoard :: Coordinates -> Bool
 isInBoard = not . isOutOfBoard
@@ -101,26 +122,18 @@ replaceCellInBoard (y,x) c b = updatedBoard
     updatedBoard = replaceItemInList y updatedRow b
     updatedRow   = replaceItemInList x c (b !! y)
 
---------------------------------------------------------------------------------------------------
+-- ***************************************
+-- **********    GAME LOGIC   ************
+-- ***************************************
 
--- scan the entire board and return the list of available moves for the given player color
-getAvailableMoves :: Board -> Color -> [Coordinates]
-getAvailableMoves board color = [(y, x) | y <- [0..boardHeight], 
-                                          x <- [0..boardWidth], 
-                                          isMoveLegal board color (y,x)]
-
--- check if player can perform a move (i.e put new piece with his color) on a cell with given coordinates
--- at least one path should be available for the player, 
--- otherwhise player cannot make the turn on given cell
-isMoveLegal :: Board -> Color -> Coordinates -> Bool
-isMoveLegal board color coordinates = legalPathExists
-  where
-    -- check if at least one legal path exists
-    legalPathExists = any (isLegalPath color) paths
-    -- generate all possible paths from given cell (in all possible directions)
-    paths = [map snd $ generatePath direction | direction <- allPossibleDirections] 
-    -- generate path with given direction      
-    generatePath = generatePathOnBoard board coordinates
+-- put pieces with new color on given coordinates and return updated board
+updateBoard :: Color -> [Coordinates] -> Board -> Board
+updateBoard color coords board = updatedBoard
+  where 
+    -- iterate over the list of coordinates and update the board by each item
+    updatedBoard = foldl replaceCell board coords
+    -- put single piece on the board on given position
+    replaceCell board coordinates = replaceCellInBoard coordinates (FilledCell color) board
 
 -- given current board state and coordinates (where we would like to put new piece (black or white)),
 -- return the list of coordinates, where we can put new color
@@ -141,15 +154,25 @@ getCellsToUpdate board color coordinates = cellsToUpdate
     keepOnlyInverseCells = (takeWhile ((== invertedCell) . snd) . tail) 
     -- cell with inverted color
     invertedCell = FilledCell $ invertColor color
-        
--- put pieces with new color on given coordinates and return updated board
-updateBoard :: Color -> [Coordinates] -> Board -> Board
-updateBoard color coords board = updatedBoard
-  where 
-    -- iterate over the list of coordinates and update the board by each item
-    updatedBoard = foldl replaceCell board coords
-    -- put single piece on the board on given position
-    replaceCell board coordinates = replaceCellInBoard coordinates (FilledCell color) board
+
+-- scan the entire board and return the list of available moves for the given player color
+getAvailableMoves :: Board -> Color -> [Coordinates]
+getAvailableMoves board color = [(y, x) | y <- [0..boardHeight], 
+                                          x <- [0..boardWidth], 
+                                          isMoveLegal board color (y,x)]
+
+-- check if player can perform a move (i.e put new piece with his color) on a cell with given coordinates
+-- at least one path should be available for the player, 
+-- otherwhise player cannot make the turn on given cell
+isMoveLegal :: Board -> Color -> Coordinates -> Bool
+isMoveLegal board color coordinates = legalPathExists
+  where
+    -- check if at least one legal path exists
+    legalPathExists = any (isLegalPath color) paths
+    -- generate all possible paths from given cell (in all possible directions)
+    paths = [map snd $ generatePath direction | direction <- allPossibleDirections] 
+    -- generate path with given direction      
+    generatePath = generatePathOnBoard board coordinates
 
 -- given the current player's color, check if path is legal by checking all the color along the path
 isLegalPath :: Color -> [Cell] -> Bool
@@ -187,27 +210,14 @@ generatePath coordinates direction = filteredPath
     filteredPath = takeWhile isInBoard path
     path = iterate (moveInDirection direction) coordinates
 
+-- **************************************
+-- **********    MAIN LOOP   ************
+-- **************************************
+
 -- main application entry point, that runs the game loop, 
 -- starting with initial game state
 main :: IO ()
 main = gameLoop initialGameState
-
--- Convert GameState to string to the string in the following format:
--- CurrentPlayer: <Color>
--- <BOARD>
-gameStateToString :: GameState -> String
-gameStateToString (GameState board color) = concat $ 
-  intersperse "\n" ["Current player: " ++ (show color), boardToString board]
-
--- Convert the list of coordinates to string in the following format:
--- 1. (a,b)
--- 2. (c,d)
--- 3. etc..
-legalMovesToString :: [Coordinates] -> String
-legalMovesToString coordinates = concatMap tupleToString $ labeledCoordinates
-  where
-    labeledCoordinates = zip [1..] coordinates
-    tupleToString (index, coords) = show index ++ ". " ++ show coords ++ "\n"
 
 -- main game loop that runs all the computations and 
 -- asks the players to perform their turns 

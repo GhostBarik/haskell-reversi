@@ -52,17 +52,19 @@ moveInDirection DBottomRight (y, x) = (y + 1, x + 1)
 
 -- create initial board with size 8x8 and put 4 pieces onto it (2 black + 2 white)
 initialBoard :: Board
-initialBoard = foldl (.) id fillFunctions blankBoard 
-
+initialBoard = boardWithPieces
+  where
+    -- put generated pieces to the empty board
+    boardWithPieces = foldl (.) id fillFunctions blankBoard 
     -- add multiple colored pieces on the board
-    where fillFunctions = [replaceCellInBoard (y, x) (FilledCell color) | 
+    fillFunctions = [replaceCellInBoard (y, x) (FilledCell color) | 
                           y     <- [3,4], 
                           x     <- [3,4], 
                           color <- [if x == y then White else Black]]
 
-          -- produce empty board with blank cells
-          blankBoard    = replicate boardHeight row
-          row           = replicate boardWidth Blank
+    -- produce empty board with blank cells
+    blankBoard    = replicate boardHeight row
+    row           = replicate boardWidth Blank
 
 -- convert the board to pretty-printable String
 boardToString :: Board -> String
@@ -89,13 +91,13 @@ getCellFromBoard board (y, x) = board !! y !! x
 -- replace single element in list by new element
 replaceItemInList :: Position -> a -> [a] -> [a]
 replaceItemInList position newElement l = 
-    let (left, (_:right)) = splitAt position l
-    in left ++ [newElement] ++ right
+  let (left, (_:right)) = splitAt position l
+  in left ++ [newElement] ++ right
 
 -- given the input board, replace the element with specific coordinates and return the updated board
 replaceCellInBoard :: Coordinates -> Cell -> Board -> Board
 replaceCellInBoard (y,x) c b = replaceItemInList y newRow b
-    where newRow = replaceItemInList x c (b !! y)
+  where newRow = replaceItemInList x c (b !! y)
 
 --------------------------------------------------------------------------------------------------
 
@@ -109,49 +111,53 @@ getAvailableMoves board color = [(y, x) | y <- [0..boardHeight],
 -- at least one path should be available for the player, 
 -- otherwhise player cannot make the turn on given cell
 isMoveLegal :: Board -> Color -> Coordinates -> Bool
-isMoveLegal board color coordinates = any (isLegalPath color) paths
+isMoveLegal board color coordinates = legalPathExists
+  where
+    -- check if at least one legal path exists
+    legalPathExists = any (isLegalPath color) paths
     -- generate all possible paths from given cell (in all possible directions)
-    where paths = [map snd $ generatePath direction | direction <- allPossibleDirections] 
-          -- generate path with given direction      
-          generatePath = generatePathOnBoard board coordinates
+    paths = [map snd $ generatePath direction | direction <- allPossibleDirections] 
+    -- generate path with given direction      
+    generatePath = generatePathOnBoard board coordinates
 
 -- given current board state and coordinates (where we would like to put new piece (black or white)),
 -- return the list of coordinates, where we can put new color
 getCellsToUpdate :: Board -> Color -> Coordinates -> [Coordinates]
 getCellsToUpdate board color coordinates = extractedCoordinates ++ [coordinates]
-    where 
-          -- extract all coordinates, that have to be updated on current turn
-          extractedCoordinates = map fst . concat . map keepOnlyInverseCells $ filteredPaths
-          -- keed only paths that are legal
-          filteredPaths = filter (isLegalPath color . map snd) paths
-          -- generate paths in all possible directions
-          paths = [generatePathOnBoard board coordinates direction | direction <- allPossibleDirections]
-          -- given list of cells, keep only those cells, that conforms to the color, 
-          -- that is opposite to the current player's color
-          keepOnlyInverseCells = (takeWhile ((== inverseCell) . snd) . tail) 
-          -- invert color in the
-          inverseCell = FilledCell $ invertColor color
+  where 
+    -- extract all coordinates, that have to be updated on current turn
+    extractedCoordinates = map fst . concat . map keepOnlyInverseCells $ filteredPaths
+    -- keed only paths that are legal
+    filteredPaths = filter (isLegalPath color . map snd) paths
+    -- generate paths in all possible directions
+    paths = [generatePathOnBoard board coordinates direction | direction <- allPossibleDirections]
+    -- given list of cells, keep only those cells, that conforms to the color, 
+    -- that is opposite to the current player's color
+    keepOnlyInverseCells = (takeWhile ((== invertedCell) . snd) . tail) 
+    -- cell with inverted color
+    invertedCell = FilledCell $ invertColor color
         
 -- put pieces with new color on given coordinates and return updated board
 updateBoard :: Color -> [Coordinates] -> Board -> Board
 updateBoard color coords board = foldl replaceCell board coords
-    -- put single piece on the board on given position
-    where replaceCell board coordinates = replaceCellInBoard coordinates (FilledCell color) board
+  -- put single piece on the board on given position
+  where replaceCell board coordinates = replaceCellInBoard coordinates (FilledCell color) board
 
 -- given the current player's color, check if path is legal by checking all the color along the path
 isLegalPath :: Color -> [Cell] -> Bool
 isLegalPath currentColor (Blank:xs) = inverseColorExistsOnPath && restPathIsValid
+  where 
     -- the should be at least >1 cells with the opposite color along the path
-    where inverseColorExistsOnPath = not . null $ invertColorPath
-          -- extract path, where cells have the opposite color
-          invertColorPath = takeWhile invertColorExistsInCell xs
-          -- extract the rest of the path by removing cell with opposite color from the beggining of the path
-          restPath = dropWhile invertColorExistsInCell xs 
-          -- check if the rest oath is valid (it should not be empty and the first cell should have the correct color)
-          restPathIsValid = ((not . null) restPath) && (head restPath == (FilledCell currentColor))
-          -- check if current cell is not blank and have the opposite color
-          invertColorExistsInCell (FilledCell c) = invertColor currentColor == c
-          invertColorExistsInCell Blank = False
+    inverseColorExistsOnPath = not . null $ invertColorPath
+    -- extract path, where cells have the opposite color
+    invertColorPath = takeWhile invertColorExistsInCell xs
+    -- extract the rest of the path by removing cell with opposite color from the beggining of the path
+    restPath = dropWhile invertColorExistsInCell xs 
+    -- check if the rest oath is valid (it should not be empty and the first cell should have the correct color)
+    restPathIsValid = ((not . null) restPath) && (head restPath == (FilledCell currentColor))
+    -- check if current cell is not blank and have the opposite color
+    invertColorExistsInCell (FilledCell c) = invertColor currentColor == c
+    invertColorExistsInCell Blank = False
 
 -- first cell on the path is not Blank, so the player cannot put his piece on this path
 isLegalPath _ _ = False
@@ -159,16 +165,17 @@ isLegalPath _ _ = False
 -- by giving the initial coordinates and direction, generate path along this direction
 generatePathOnBoard :: Board -> Coordinates -> Direction -> [(Coordinates, Cell)]
 generatePathOnBoard board coordinates direction = generatedPath
-    -- generate path and label each cell along the path with its coordinates
-    where generatedPath = map labelCellWithCoordinates $ generatePath coordinates direction
-          -- given the coordinates, extract cell from the board and return the tuple (Coordinates, Cell)
-          labelCellWithCoordinates coordinates = (coordinates, getCellFromBoard board coordinates)
+  where        
+    -- generate path and label each cell along the path with its Coordinates
+    generatedPath = map labelCellWithCoordinates $ generatePath coordinates direction
+    -- given the coordinates, extract cell from the board and return the tuple (Coordinates, Cell)
+    labelCellWithCoordinates coordinates = (coordinates, getCellFromBoard board coordinates)
 
 -- given starting position and direction, generate the list of coordinates, 
 -- that will be visited along with direction until the boundaries of board are reached
 generatePath :: Coordinates -> Direction -> [Coordinates]
 generatePath coordinates direction = takeWhile isInBoard path
-    where path = iterate (moveInDirection direction) coordinates
+  where path = iterate (moveInDirection direction) coordinates
 
 -- main application entry point, that runs the game loop, 
 -- starting with initial game state
@@ -188,7 +195,7 @@ gameStateToString (GameState board color) = concat $
 -- 3. etc..
 legalMovesToString :: [Coordinates] -> String
 legalMovesToString coordinates = concatMap tupleToString $ zip [1..] coordinates
-    where tupleToString (index, coords) = show index ++ ". " ++ show coords ++ "\n"
+  where tupleToString (index, coords) = show index ++ ". " ++ show coords ++ "\n"
 
 -- main game loop that runs all the computations and 
 -- asks the players to perform their turns 

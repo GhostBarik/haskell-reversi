@@ -12,7 +12,7 @@ module Lib (
 
 import Data.List
 import qualified Data.Vector as V
-import qualified Data.Vector.Split as S
+import qualified Data.List.Split as S
 
 -- TODO: jsme schopni nahradit [[Cell]] treba jednorozmernym Vector Cell,
 --  ktery bude mit O(1) cteni prvku a O(N) update 
@@ -105,7 +105,9 @@ initialBoard = boardWithPieces
 
 -- convert the board to pretty-printable String
 boardToString :: Board -> String
-boardToString = concatMap $ (++ "\n") . (intersperse ',') . (map cellToChar) . (S.chunksOf boardWidth)
+boardToString board = formatLines boardList
+  where formatLines = concatMap $ (++ "\n") . (intersperse ',') . (map cellToChar)
+        boardList = S.chunksOf boardWidth (V.toList board)
 
 -- test if given coordinates are located outside the bounds of board (1..8, 1..8)
 isOutOfBoard :: Coordinates -> Bool

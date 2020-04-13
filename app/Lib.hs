@@ -14,15 +14,6 @@ import Data.List
 import qualified Data.Vector as V
 import qualified Data.List.Split as S
 
--- TODO: jsme schopni nahradit [[Cell]] treba jednorozmernym Vector Cell,
---  ktery bude mit O(1) cteni prvku a O(N) update 
--- (max. 1 kopie datove struktury za 1 tah)
--- HINT: pouzit knihovnu Data.Vector 
--- HINT: pouzit metodu (//) na hromadny update boardu
--- Vector ... (//) [(1, White), (2,Black)]
-
--- V.empty = create empty vector
--- replicate :: Int -> a -> Vector a
 
 -- Exported functions:
 

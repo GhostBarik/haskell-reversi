@@ -39,7 +39,7 @@ boardHeight = 8
 data Cell = Blank | FilledCell Color deriving (Show, Eq)
 data Color = Black | White deriving (Show, Eq)
 
--- board represented as two-dimensional list
+-- board represented as one-dimensional Vector for efficiency
 type Board = V.Vector Cell
 
 -- type aliases for common data types for better readability

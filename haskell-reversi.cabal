@@ -1,0 +1,68 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 8f39fc065e9ce2eea7092ce942f2994c50e75e0fa1b785280963af8c30232cde
+
+name:           haskell-reversi
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/haskell-reversi#readme>
+homepage:       https://github.com/githubuser/haskell-reversi#readme
+bug-reports:    https://github.com/githubuser/haskell-reversi/issues
+author:         Author name here
+maintainer:     example@example.com
+copyright:      2020 Author name here
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/githubuser/haskell-reversi
+
+library
+  exposed-modules:
+      Lib
+  other-modules:
+      Paths_haskell_reversi
+  hs-source-dirs:
+      src
+  build-depends:
+      base >=4.7 && <5
+    , split ==0.2.3.4
+    , vector ==0.12.1.2
+  default-language: Haskell2010
+
+executable haskell-reversi-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_haskell_reversi
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , haskell-reversi
+    , split ==0.2.3.4
+    , vector ==0.12.1.2
+  default-language: Haskell2010
+
+test-suite haskell-reversi-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_haskell_reversi
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , haskell-reversi
+    , split ==0.2.3.4
+    , vector ==0.12.1.2
+  default-language: Haskell2010

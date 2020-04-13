@@ -1,6 +1,6 @@
 # haskell-reversi
 
-## How to build/run project
-* cabal init
-* cabal configure
-* cabal run (or cabal repl)
+## Installation notes
+* stack setup
+* stack build
+* stack repl (or stack exec haskell-reversi-exe)

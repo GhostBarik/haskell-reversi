@@ -96,8 +96,10 @@ replaceItemInList position newElement l =
 
 -- given the input board, replace the element with specific coordinates and return the updated board
 replaceCellInBoard :: Coordinates -> Cell -> Board -> Board
-replaceCellInBoard (y,x) c b = replaceItemInList y newRow b
-  where newRow = replaceItemInList x c (b !! y)
+replaceCellInBoard (y,x) c b = updatedBoard
+  where
+    updatedBoard = replaceItemInList y updatedRow b
+    updatedRow   = replaceItemInList x c (b !! y)
 
 --------------------------------------------------------------------------------------------------
 
@@ -123,8 +125,11 @@ isMoveLegal board color coordinates = legalPathExists
 -- given current board state and coordinates (where we would like to put new piece (black or white)),
 -- return the list of coordinates, where we can put new color
 getCellsToUpdate :: Board -> Color -> Coordinates -> [Coordinates]
-getCellsToUpdate board color coordinates = extractedCoordinates ++ [coordinates]
+getCellsToUpdate board color coordinates = cellsToUpdate
   where 
+    -- all coordinates that have to be updated + initial coordinates 
+    -- (where player would like to put his new piece)
+    cellsToUpdate = extractedCoordinates ++ [coordinates]
     -- extract all coordinates, that have to be updated on current turn
     extractedCoordinates = map fst . concat . map keepOnlyInverseCells $ filteredPaths
     -- keed only paths that are legal
@@ -139,9 +144,12 @@ getCellsToUpdate board color coordinates = extractedCoordinates ++ [coordinates]
         
 -- put pieces with new color on given coordinates and return updated board
 updateBoard :: Color -> [Coordinates] -> Board -> Board
-updateBoard color coords board = foldl replaceCell board coords
-  -- put single piece on the board on given position
-  where replaceCell board coordinates = replaceCellInBoard coordinates (FilledCell color) board
+updateBoard color coords board = updatedBoard
+  where 
+    -- iterate over the list of coordinates and update the board by each item
+    updatedBoard = foldl replaceCell board coords
+    -- put single piece on the board on given position
+    replaceCell board coordinates = replaceCellInBoard coordinates (FilledCell color) board
 
 -- given the current player's color, check if path is legal by checking all the color along the path
 isLegalPath :: Color -> [Cell] -> Bool
@@ -157,7 +165,7 @@ isLegalPath currentColor (Blank:xs) = inverseColorExistsOnPath && restPathIsVali
     restPathIsValid = ((not . null) restPath) && (head restPath == (FilledCell currentColor))
     -- check if current cell is not blank and have the opposite color
     invertColorExistsInCell (FilledCell c) = invertColor currentColor == c
-    invertColorExistsInCell Blank = False
+    invertColorExistsInCell Blank          = False
 
 -- first cell on the path is not Blank, so the player cannot put his piece on this path
 isLegalPath _ _ = False
@@ -174,8 +182,10 @@ generatePathOnBoard board coordinates direction = generatedPath
 -- given starting position and direction, generate the list of coordinates, 
 -- that will be visited along with direction until the boundaries of board are reached
 generatePath :: Coordinates -> Direction -> [Coordinates]
-generatePath coordinates direction = takeWhile isInBoard path
-  where path = iterate (moveInDirection direction) coordinates
+generatePath coordinates direction = filteredPath
+  where
+    filteredPath = takeWhile isInBoard path
+    path = iterate (moveInDirection direction) coordinates
 
 -- main application entry point, that runs the game loop, 
 -- starting with initial game state
@@ -194,8 +204,10 @@ gameStateToString (GameState board color) = concat $
 -- 2. (c,d)
 -- 3. etc..
 legalMovesToString :: [Coordinates] -> String
-legalMovesToString coordinates = concatMap tupleToString $ zip [1..] coordinates
-  where tupleToString (index, coords) = show index ++ ". " ++ show coords ++ "\n"
+legalMovesToString coordinates = concatMap tupleToString $ labeledCoordinates
+  where
+    labeledCoordinates = zip [1..] coordinates
+    tupleToString (index, coords) = show index ++ ". " ++ show coords ++ "\n"
 
 -- main game loop that runs all the computations and 
 -- asks the players to perform their turns 

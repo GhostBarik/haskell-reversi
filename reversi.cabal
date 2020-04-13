@@ -51,13 +51,15 @@ executable reversi
   main-is:             Main.hs
 
   -- Modules included in this executable, other than Main.
-  -- other-modules:
+  other-modules:       Lib
+    
 
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:
 
   -- Other library packages from which modules are imported.
-  build-depends:       base ^>=4.12.0.0
+  build-depends:       base  ^>=4.12.0.0,
+                       vector ==0.12.1.2
 
   -- Directories containing source files.
   hs-source-dirs:      app

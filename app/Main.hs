@@ -2,7 +2,6 @@ module Main where
 
 import Lib
 import Text.Read
-import qualified Data.Vector as V
 
 -- **************************************
 -- **********    MAIN LOOP   ************

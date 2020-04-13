@@ -11,13 +11,9 @@ module Lib (
 )  where
 
 import Data.List
+import qualified Data.Vector as V
+import qualified Data.List.Split as S
 
--- TODO: jsme schopni nahradit [[Cell]] treba jednorozmernym Vector Cell,
---  ktery bude mit O(1) cteni prvku a O(N) update 
--- (max. 1 kopie datove struktury za 1 tah)
--- HINT: pouzit knihovnu Data.Vector 
--- HINT: pouzit metodu (//) na hromadny update boardu
--- Vector ... (//) [(1, White), (2,Black)]
 
 -- Exported functions:
 
@@ -44,7 +40,7 @@ data Cell = Blank | FilledCell Color deriving (Show, Eq)
 data Color = Black | White deriving (Show, Eq)
 
 -- board represented as two-dimensional list
-type Board = [[Cell]]
+type Board = V.Vector Cell
 
 -- type aliases for common data types for better readability
 type Position = Int
@@ -88,24 +84,30 @@ initialBoard :: Board
 initialBoard = boardWithPieces
   where
     -- put generated pieces to the empty board
-    boardWithPieces = foldl (.) id fillFunctions blankBoard 
+    boardWithPieces = replaceCellsInBoard initialFilledCells blankBoard
     -- add multiple colored pieces on the board
-    fillFunctions = [replaceCellInBoard (y, x) (FilledCell color) | 
-                          y     <- [3,4], 
-                          x     <- [3,4], 
-                          color <- [if x == y then White else Black]]
+    initialFilledCells = [((y, x), (FilledCell color)) | 
+                            y     <- [3,4], 
+                            x     <- [3,4], 
+                            color <- [if x == y then White else Black]]
 
     -- produce empty board with blank cells
-    blankBoard    = replicate boardHeight row
-    row           = replicate boardWidth Blank
+    blankBoard         = V.replicate (boardHeight * boardWidth) Blank
 
 -- convert the board to pretty-printable String
 boardToString :: Board -> String
-boardToString = concatMap $ (++ "\n") . (intersperse ',') . (map cellToChar)
+boardToString board = formatLines boardList
+  where formatLines = concatMap $ (++ "\n") . (intersperse ',') . (map cellToChar)
+        boardList   = S.chunksOf boardWidth (V.toList board)
 
 -- test if given coordinates are located outside the bounds of board (1..8, 1..8)
 isOutOfBoard :: Coordinates -> Bool
 isOutOfBoard (y, x) = y < 0 || y >= boardHeight || x < 0 || x >= boardWidth
+
+-- convert 2-D coordinates to vector index
+-- assumes that coordinates are within bounds of the board
+coordsToIndex :: Coordinates -> Int
+coordsToIndex (y, x) = y * boardWidth + x
 
 -- Convert GameState to string to the string in the following format:
 -- CurrentPlayer: <Color>
@@ -119,7 +121,7 @@ calculateScore :: Board -> String
 calculateScore board = whiteScore ++ "\n" ++ blackScore
   where whiteScore = "White Player score: " ++ scoreToString White
         blackScore = "Black Player score: " ++ scoreToString Black
-        scoreToString color = show . length $ filter (== FilledCell color) (concat board)
+        scoreToString color = show . length $ V.filter (== FilledCell color) board
 
 -- Convert the list of coordinates to string in the following format:
 -- 1. (a,b)
@@ -143,7 +145,7 @@ cellToChar (FilledCell White) = 'o'
 
 -- extract the specific cell (with specific {X,Y} coordinates) from board
 getCellFromBoard :: Board -> Coordinates -> Cell
-getCellFromBoard board (y, x) = board !! y !! x
+getCellFromBoard board coords = board V.! (coordsToIndex coords)
 
 -- replace single element in list by new element
 replaceItemInList :: Position -> a -> [a] -> [a]
@@ -151,12 +153,10 @@ replaceItemInList position newElement l =
   let (left, (_:right)) = splitAt position l
   in left ++ [newElement] ++ right
 
--- given the input board, replace the element with specific coordinates and return the updated board
-replaceCellInBoard :: Coordinates -> Cell -> Board -> Board
-replaceCellInBoard (y,x) c b = updatedBoard
-  where
-    updatedBoard = replaceItemInList y updatedRow b
-    updatedRow   = replaceItemInList x c (b !! y)
+-- given the input board, replace the elements with specific coordinates and return the updated board
+replaceCellsInBoard :: [(Coordinates, Cell)] -> Board -> Board
+replaceCellsInBoard xs board = board V.// map toIndex xs
+  where toIndex (coords, cell) = (coordsToIndex coords, cell)
 
 -- ***************************************
 -- **********    GAME LOGIC   ************
@@ -164,18 +164,14 @@ replaceCellInBoard (y,x) c b = updatedBoard
 
 -- put pieces with new color on given coordinates and return updated board
 updateBoard :: Color -> [Coordinates] -> Board -> Board
-updateBoard color coords board = updatedBoard
-  where 
-    -- iterate over the list of coordinates and update the board by each item
-    updatedBoard = foldl replaceCell board coords
-    -- put single piece on the board on given position
-    replaceCell board coordinates = replaceCellInBoard coordinates (FilledCell color) board
+updateBoard color coords board = replaceCellsInBoard (zip coords colorList) board
+  where colorList = repeat (FilledCell color)
 
 -- given current board state and coordinates (where we would like to put new piece (black or white)),
 -- return the list of coordinates, where we can put new color
 getCellsToUpdate :: Board -> Color -> Coordinates -> [Coordinates]
 getCellsToUpdate board color coordinates = cellsToUpdate
-  where 
+  where
     -- all coordinates that have to be updated + initial coordinates 
     -- (where player would like to put his new piece)
     cellsToUpdate = extractedCoordinates ++ [coordinates]

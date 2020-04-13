@@ -58,8 +58,9 @@ executable reversi
   -- other-extensions:
 
   -- Other library packages from which modules are imported.
-  build-depends:       base  ^>=4.12.0.0,
-                       vector ==0.12.1.2
+  build-depends:       base         ^>=4.12.0.0,
+                       vector        ==0.12.1.2,
+                       split         ==0.2.3.4
 
   -- Directories containing source files.
   hs-source-dirs:      app

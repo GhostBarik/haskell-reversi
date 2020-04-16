@@ -98,7 +98,7 @@ initialBoard = boardWithPieces
 -- convert the board to pretty-printable String
 boardToString :: Board -> String
 boardToString board = formatLines boardListIndexedCols
-  where formatLines      = concatMap $ (++ "\n")
+  where formatLines          = concatMap $ (++ "\n")
         boardListIndexedCols = ("  " ++ (intercalate "," [show idx | idx <- [0..boardWidth-1]])) : boardListIndexedRows
         boardListIndexedRows = fmap (\(idx, line) -> show idx ++ " " ++ line) $ I.indexed boardList
         boardList            = fmap rowToString $ S.chunksOf boardWidth (V.toList board)

@@ -13,6 +13,7 @@ module Lib (
 import Data.List
 import qualified Data.Vector as V
 import qualified Data.List.Split as S
+import qualified Data.List.Index as I
 
 
 -- Exported functions:
@@ -96,9 +97,12 @@ initialBoard = boardWithPieces
 
 -- convert the board to pretty-printable String
 boardToString :: Board -> String
-boardToString board = formatLines boardList
-  where formatLines = concatMap $ (++ "\n") . (intersperse ',') . (map cellToChar)
-        boardList   = S.chunksOf boardWidth (V.toList board)
+boardToString board = formatLines boardListIndexedCols
+  where formatLines      = concatMap $ (++ "\n")
+        boardListIndexedCols = ("  " ++ (intercalate "," [show idx | idx <- [0..boardWidth-1]])) : boardListIndexedRows
+        boardListIndexedRows = fmap (\(idx, line) -> show idx ++ " " ++ line) $ I.indexed boardList
+        boardList            = fmap rowToString $ S.chunksOf boardWidth (V.toList board)
+        rowToString          = (intersperse ',') . (fmap cellToChar)
 
 -- test if given coordinates are located outside the bounds of board (1..8, 1..8)
 isOutOfBoard :: Coordinates -> Bool
